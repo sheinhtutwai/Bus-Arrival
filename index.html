@@ -1,184 +1,357 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<title>Bus No 58 Arrivals</title>
-<style>
-  .bus-table {
-    border-collapse: collapse;
-    width: 100%;
-    margin-bottom: 20px;
-  }
+    <meta charset="UTF-8">
+    <!-- Make site responsive -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus No 58 Arrivals</title>
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <!-- Theme Color for Browser UI -->
+    <meta name="theme-color" content="#007bff">
+    <!-- Basic Icons (replace with your actual icons) -->
+    <link rel="icon" href="icons/icon-192x192.png" sizes="192x192" type="image/png">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
 
-  .bus-table th,
-  .bus-table td {
-    border: 1px solid black;
-    padding: 8px;
-    text-align: left;
-    width: auto;
-  }
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 10px;
+            margin: 0;
+        }
 
-  .arrival-time {
-    color: red;
-  }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
 
-  .SEA {
-    color: green;
-  }
+        .table-container {
+            overflow-x: auto; /* Allows horizontal scrolling on small screens */
+            margin-bottom: 20px;
+        }
 
-  .SDA {
-    color: orange;
-  }
+        .bus-table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 600px; /* Prevent table from becoming too squished */
+        }
 
-  .LSD {
-    color: red;
-  }
+        .bus-table th,
+        .bus-table td {
+            border: 1px solid #ddd;
+            padding: 8px 10px;
+            text-align: left;
+            white-space: nowrap; /* Prevent text wrapping within cells initially */
+        }
 
-  .button-container {
-    margin-bottom: 20px;
-  }
+        .bus-table th {
+            background-color: #f2f2f2;
+        }
 
-  .button-container button {
-    padding: 10px 20px;
-    margin-right: 10px;
-    border: none;
-    background-color: #007bff;
-    color: white;
-    cursor: pointer;
-    background-color: red;
-  }
+        .arrival-time {
+            color: #d9534f; /* Reddish color */
+            font-weight: bold;
+        }
 
-  .button-container button.selected {
-    background-color: green;
-  }
+        /* Bus Load Indicators */
+        .SEA { color: green; font-weight: bold; } /* Seats Available */
+        .SDA { color: orange; font-weight: bold; } /* Standing Available */
+        .LSD { color: red; font-weight: bold; } /* Limited Standing */
 
-  .button-container button:hover {
-    background-color: green;
-  }
-</style>
+        .button-container {
+            display: flex; /* Use flexbox for layout */
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+            gap: 10px; /* Space between buttons */
+            margin-bottom: 20px;
+            justify-content: center; /* Center buttons if they wrap */
+        }
+
+        .button-container button {
+            padding: 12px 20px;
+            margin: 0; /* Remove default margin, use gap instead */
+            border: none;
+            background-color: #d9534f; /* Default red */
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 1em;
+            transition: background-color 0.2s ease;
+        }
+
+        .button-container button.selected {
+            background-color: #5cb85c; /* Green */
+        }
+
+        .button-container button:hover:not(.selected) {
+            background-color: #c9302c; /* Darker red on hover */
+        }
+
+        #installButton {
+            background-color: #007bff; /* Blue for install button */
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 15px; /* Space above install button */
+            display: none; /* Hidden by default */
+            width: 100%; /* Make it full width */
+            max-width: 300px; /* Max width for larger screens */
+            margin-left: auto;
+            margin-right: auto;
+        }
+         #installButton:hover {
+            background-color: #0056b3; /* Darker blue */
+         }
+
+        /* Basic error/loading message styling */
+        .message {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #555;
+        }
+
+    </style>
 </head>
 <body>
 
-<h1>Bus No 58 Arrivals</h1>
+    <h1>Bus No 58 Arrivals</h1>
 
-<div class="button-container">
-  <button id="busStop72059">Bus Stop 72059 Office</button>
-  <button id="busStop77211">Bus Stop 77211 Home</button>
-</div>
+    <div class="button-container">
+        <button id="busStop72059">Bus Stop 72059 Office</button>
+        <button id="busStop77211">Bus Stop 77211 Home</button>
+    </div>
 
-<table id="busTable" class="bus-table">
-  <thead>
-    <tr>
-      <th>Bus No</th>
-      <th class="arrival-time">1st Bus</th>
-      <th>Type</th>
-      <th class="arrival-time">2nd Bus</th>
-      <th>Type</th>
-      <th class="arrival-time">3rd Bus</th>
-      <th>Type</th>
-    </tr>
-  </thead>
-  <tbody id="busData">
-  </tbody>
-</table>
+    <div class="table-container">
+        <table id="busTable" class="bus-table">
+            <thead>
+                <tr>
+                    <th>Bus No</th>
+                    <th class="arrival-time">1st Bus</th>
+                    <th>Load / Type</th>
+                    <th class="arrival-time">2nd Bus</th>
+                    <th>Load / Type</th>
+                    <th class="arrival-time">3rd Bus</th>
+                    <th>Load / Type</th>
+                </tr>
+            </thead>
+            <tbody id="busData">
+                 <!-- Data will be loaded here -->
+                 <tr><td colspan="7" class="message">Loading bus data...</td></tr>
+            </tbody>
+        </table>
+    </div>
 
-<script>
-  const busDataContainer = document.getElementById('busData');
-  const busTable = document.getElementById('busTable');
+    <!-- Add to Home Screen Button -->
+    <button id="installButton">Add to Home Screen</button>
 
-  // Function to fetch bus arrival data and update the table
-  function fetchBusData(busStopId) {
-    const url = `https://arrivelah2.busrouter.sg/?id=${busStopId}`;
+    <script>
+        const busDataContainer = document.getElementById('busData');
+        const busTable = document.getElementById('busTable');
+        const busStop72059Button = document.getElementById('busStop72059');
+        const busStop77211Button = document.getElementById('busStop77211');
+        const installButton = document.getElementById('installButton');
+        let currentBusStopId = null; // Keep track of the currently selected bus stop
+        let refreshIntervalId = null; // To store the interval ID for auto-refresh
+        const REFRESH_INTERVAL = 30000; // Refresh every 30 seconds (30000 ms)
 
-    fetch(url)
-      .then(response => response.json())
-      .then(data => {
-        if (data && data.services) {
-          const bus58Services = data.services.filter(service => service.no === '58');
+        // --- PWA Install Logic ---
+        let deferredPrompt;
 
-          // Clear existing table rows
-          busDataContainer.innerHTML = '';
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent the mini-infobar from appearing on mobile
+            e.preventDefault();
+            // Stash the event so it can be triggered later.
+            deferredPrompt = e;
+            // Update UI notify the user they can install the PWA
+            console.log('`beforeinstallprompt` event was fired.');
+            // Show the install button
+            installButton.style.display = 'block';
 
-          if (bus58Services.length > 0) {
-            bus58Services.forEach(service => {
-              const row = busDataContainer.insertRow();
-              let cellIndex = 0;
+            installButton.addEventListener('click', installApp);
+        });
 
-              // Bus No
-              const busNoCell = row.insertCell(cellIndex++);
-              busNoCell.textContent = service.no;
-
-              // Next Arrival
-              const nextArrivalCell = row.insertCell(cellIndex++);
-              nextArrivalCell.textContent = service.next ? new Date(service.next.time).toLocaleString('en-SG') : '-';
-              nextArrivalCell.classList.add('arrival-time');
-
-              // Next Arrival Type
-              const nextArrivalTypeCell = row.insertCell(cellIndex++);
-              nextArrivalTypeCell.textContent = service.next && service.next.type ? service.next.type.toUpperCase() : '-';
-              if (service.next && service.next.load) {
-                nextArrivalTypeCell.classList.add(service.next.load);
-              }
-
-              // Subsequent Arrival
-              const subsequentArrivalCell = row.insertCell(cellIndex++);
-              subsequentArrivalCell.textContent = service.subsequent ? new Date(service.subsequent.time).toLocaleString('en-SG') : '-';
-              subsequentArrivalCell.classList.add('arrival-time');
-
-              // Subsequent Arrival Type
-              const subsequentArrivalTypeCell = row.insertCell(cellIndex++);
-              subsequentArrivalTypeCell.textContent = service.subsequent && service.subsequent.type ? service.subsequent.type.toUpperCase() : '-';
-              if (service.subsequent && service.subsequent.load) {
-                subsequentArrivalTypeCell.classList.add(service.subsequent.load);
-              }
-
-              // Next Arrival 3
-              const nextArrival3Cell = row.insertCell(cellIndex++);
-              nextArrival3Cell.textContent = service.next3 ? new Date(service.next3.time).toLocaleString('en-SG') : '-';
-              nextArrival3Cell.classList.add('arrival-time');
-
-              // Next Arrival 3 Type
-              const nextArrival3TypeCell = row.insertCell(cellIndex++);
-              nextArrival3TypeCell.textContent = service.next3 && service.next3.type ? service.next3.type.toUpperCase() : '-';
-              if (service.next3 && service.next3.load) {
-                nextArrival3TypeCell.classList.add(service.next3.load);
-              }
+        function installApp() {
+            // Hide the app provided install promotion
+            installButton.style.display = 'none';
+            // Show the install prompt
+            deferredPrompt.prompt();
+            // Wait for the user to respond to the prompt
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    console.log('User accepted the install prompt');
+                } else {
+                    console.log('User dismissed the install prompt');
+                }
+                // We've used the prompt, and can't use it again, discard it
+                deferredPrompt = null;
             });
-          } else {
-            busDataContainer.innerHTML = '<tr><td colspan="8">No information found for Bus No 58.</td></tr>';
-          }
-        } else {
-          busDataContainer.innerHTML = '<tr><td colspan="8">Failed to load bus data.</td></tr>';
         }
-      })
-      .catch(error => {
-        console.error(`Error fetching data for bus stop ${busStopId}:`, error);
-        busDataContainer.innerHTML = '<tr><td colspan="8">Error fetching bus data.</td></tr>';
-      });
-  }
 
-  // Add event listeners to the buttons
-  const busStop72059Button = document.getElementById('busStop72059');
-  const busStop77211Button = document.getElementById('busStop77211');
+        window.addEventListener('appinstalled', (evt) => {
+            // Log install to analytics or console
+            console.log('App was installed.', evt);
+            // Clear the deferredPrompt so it doesn't get triggered again
+            deferredPrompt = null;
+            // Hide the install button if it was somehow still visible
+             installButton.style.display = 'none';
+        });
 
-  busStop72059Button.addEventListener('click', () => {
-    fetchBusData('72059');
-    selectButton(busStop72059Button);
-  });
-  busStop77211Button.addEventListener('click', () => {
-    fetchBusData('77211');
-    selectButton(busStop77211Button);
-  });
+        // --- Bus Data Fetching Logic ---
 
-  function selectButton(selectedButton) {
-    busStop72059Button.classList.remove('selected');
-    busStop77211Button.classList.remove('selected');
-    selectedButton.classList.add('selected');
-  }
+        // Function to format time nicely (e.g., 10:35 AM)
+        function formatTime(isoTimeString) {
+            if (!isoTimeString) return '-';
+            try {
+                const date = new Date(isoTimeString);
+                 // Use Singapore Time Zone explicitly if running elsewhere, but toLocaleString usually handles it
+                return date.toLocaleTimeString('en-SG', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                    // timeZone: 'Asia/Singapore' // Optional: Be explicit
+                });
+            } catch (e) {
+                console.error("Error formatting date:", isoTimeString, e);
+                return '-';
+            }
+        }
 
-  // Initial load with the first bus stop
-  fetchBusData('72059');
-  selectButton(busStop72059Button);
-</script>
+        // Function to display messages in the table body
+        function showMessage(message) {
+             busDataContainer.innerHTML = `<tr><td colspan="7" class="message">${message}</td></tr>`;
+        }
+
+        // Function to fetch bus arrival data and update the table
+        function fetchBusData(busStopId) {
+            currentBusStopId = busStopId; // Store the current bus stop ID
+            console.log(`Fetching data for bus stop ${busStopId}...`);
+            const url = `https://arrivelah2.busrouter.sg/?id=${busStopId}`;
+
+            // Show loading message immediately
+            showMessage(`Loading data for Bus Stop ${busStopId}...`);
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.services) {
+                        const bus58Service = data.services.find(service => service.no === '58');
+
+                        // Clear existing table rows
+                        busDataContainer.innerHTML = '';
+
+                        if (bus58Service) {
+                            const service = bus58Service; // Easier reference
+                            const row = busDataContainer.insertRow();
+                            let cellIndex = 0;
+
+                            // Bus No
+                            row.insertCell(cellIndex++).textContent = service.no;
+
+                            // Helper function to add arrival cells
+                            const addArrivalCells = (busInfo) => {
+                                const arrivalCell = row.insertCell(cellIndex++);
+                                arrivalCell.textContent = formatTime(busInfo?.time);
+                                arrivalCell.classList.add('arrival-time');
+
+                                const typeCell = row.insertCell(cellIndex++);
+                                const load = busInfo?.load?.toUpperCase() || '-';
+                                const type = busInfo?.type?.toUpperCase() || '-';
+                                typeCell.textContent = `${load} / ${type}`;
+                                if (busInfo?.load) {
+                                     typeCell.classList.add(busInfo.load); // Add class for styling (SEA, SDA, LSD)
+                                }
+                            };
+
+                            addArrivalCells(service.next);   // 1st Bus
+                            addArrivalCells(service.next2);  // 2nd Bus (API uses next2)
+                            addArrivalCells(service.next3);  // 3rd Bus
+
+                        } else {
+                           showMessage(`No arrival information found for Bus No 58 at stop ${busStopId}.`);
+                        }
+                    } else {
+                        showMessage(`Failed to load valid bus data structure for stop ${busStopId}.`);
+                    }
+                })
+                .catch(error => {
+                    console.error(`Error fetching data for bus stop ${busStopId}:`, error);
+                    showMessage(`Error fetching bus data for stop ${busStopId}. Please check connection.`);
+                });
+        }
+
+        // Add event listeners to the buttons
+        busStop72059Button.addEventListener('click', () => {
+            fetchBusData('72059');
+            selectButton(busStop72059Button);
+            startAutoRefresh();
+        });
+        busStop77211Button.addEventListener('click', () => {
+            fetchBusData('77211');
+            selectButton(busStop77211Button);
+            startAutoRefresh();
+        });
+
+        function selectButton(selectedButton) {
+            // Deselect all buttons
+            document.querySelectorAll('.button-container button').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            // Select the clicked button
+            selectedButton.classList.add('selected');
+        }
+
+        // --- Auto Refresh Logic ---
+        function startAutoRefresh() {
+            // Clear any existing interval
+            if (refreshIntervalId) {
+                clearInterval(refreshIntervalId);
+                console.log("Cleared previous refresh interval.");
+            }
+            // Start a new interval only if a bus stop is selected
+            if (currentBusStopId) {
+                console.log(`Starting auto-refresh every ${REFRESH_INTERVAL / 1000}s for stop ${currentBusStopId}`);
+                refreshIntervalId = setInterval(() => {
+                    console.log("Auto-refresh triggered.");
+                    fetchBusData(currentBusStopId); // Fetch data for the currently selected stop
+                }, REFRESH_INTERVAL);
+            }
+        }
+
+        // --- Initial Load ---
+        function initialize() {
+            // Default to the first bus stop
+            fetchBusData('72059');
+            selectButton(busStop72059Button);
+            startAutoRefresh(); // Start refreshing after initial load
+
+            // --- Service Worker Registration ---
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/sw.js')
+                        .then(registration => {
+                            console.log('Service Worker registered with scope:', registration.scope);
+                        })
+                        .catch(err => {
+                            console.error('Service Worker registration failed:', err);
+                        });
+                });
+            } else {
+                 console.log('Service Worker not supported in this browser.');
+            }
+        }
+
+        // Run initialize when the DOM is ready
+       document.addEventListener('DOMContentLoaded', initialize);
+
+    </script>
 
 </body>
 </html>
