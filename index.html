@@ -1,25 +1,261 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Simple Site</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: #f0f0f0;
-        }
-        h1 {
-            color: #333;
-        }
-    </style>
+<title>Bus No 58 Arrivals</title>
+<style>
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  th, td {
+    border: 1px solid black;
+    padding: 8px;
+    text-align: left;
+  }
+</style>
 </head>
 <body>
-    <h1>Hello, Vercel World!</h1>
-    <p>This is my first website deployed with Vercel.</p>
+
+<h1>Bus No 58 Arrivals - Bus Stop 72059 Office</h1>
+
+<table id="busTable1">
+  <thead>
+    <tr>
+      <th>Bus No</th>
+      <th style="color: red;">1st Bus</th>
+      <th>Type</th>
+      <th style="color: red;">2nd Bus</th>
+      <th>Type</th>
+      <th style="color: red;">3rd Bus</th>
+      <th>Type</th>
+    </tr>
+  </thead>
+  <tbody id="busData1">
+  </tbody>
+</table>
+
+<script>
+  const url1 = 'https://arrivelah2.busrouter.sg/?id=72059';
+  const busDataContainer1 = document.getElementById('busData1');
+
+  function fetchBusData1() {
+    fetch(url1)
+      .then(response => response.json())
+      .then(data => {
+        if (data && data.services) {
+          const bus58Services = data.services.filter(service => service.no === '58');
+
+          // Clear existing table rows
+          busDataContainer1.innerHTML = '';
+
+          if (bus58Services.length > 0) {
+            bus58Services.forEach(service => {
+              const row = busDataContainer1.insertRow();
+              let cellIndex = 0;
+
+              // Bus No
+              const busNoCell = row.insertCell(cellIndex++);
+              busNoCell.textContent = service.no;
+
+              // Operator
+              //const operatorCell = row.insertCell(cellIndex++);
+              //operatorCell.textContent = service.operator;
+
+              // Next Arrival
+              const nextArrivalCell = row.insertCell(cellIndex++);
+              nextArrivalCell.textContent = service.next ? new Date(service.next.time).toLocaleString('en-SG') : '-';
+              nextArrivalCell.style.color = 'red'; // Apply red color
+
+
+              // Next Arrival Type
+              const nextArrivalTypeCell = row.insertCell(cellIndex++);
+              nextArrivalTypeCell.textContent = service.next && service.next.type ? service.next.type.toUpperCase() : '-';
+              if (service.next && service.next.load) {
+                if (service.next.load === 'SEA') {
+                  nextArrivalTypeCell.style.color = 'green';
+                } else if (service.next.load === 'SDA') {
+                  nextArrivalTypeCell.style.color = 'orange';
+                } else if (service.next.load === 'LSD') {
+                  nextArrivalTypeCell.style.color = 'red';
+                }
+              }
+
+              // Subsequent Arrival
+              const subsequentArrivalCell = row.insertCell(cellIndex++);
+              subsequentArrivalCell.textContent = service.subsequent ? new Date(service.subsequent.time).toLocaleString('en-SG') : '-';
+              subsequentArrivalCell.style.color = 'red'; // Apply red color
+
+              // Subsequent Arrival Type
+              const subsequentArrivalTypeCell = row.insertCell(cellIndex++);
+              subsequentArrivalTypeCell.textContent = service.subsequent && service.subsequent.type ? service.subsequent.type.toUpperCase() : '-';
+              if (service.subsequent && service.subsequent.load) {
+                if (service.subsequent.load === 'SEA') {
+                  subsequentArrivalTypeCell.style.color = 'green';
+                } else if (service.subsequent.load === 'SDA') {
+                  subsequentArrivalTypeCell.style.color = 'orange';
+                } else if (service.subsequent.load === 'LSD') {
+                  subsequentArrivalTypeCell.style.color = 'red';
+                }
+              }
+
+              // Next Arrival 3
+              const nextArrival3Cell = row.insertCell(cellIndex++);
+              nextArrival3Cell.textContent = service.next3 ? new Date(service.next3.time).toLocaleString('en-SG') : '-';
+              nextArrival3Cell.style.color = 'red'; // Apply red color
+
+              // Next Arrival 3 Type
+              const nextArrival3TypeCell = row.insertCell(cellIndex++);
+              nextArrival3TypeCell.textContent = service.next3 && service.next3.type ? service.next3.type.toUpperCase() : '-';
+              if (service.next3 && service.next3.load) {
+                if (service.next3.load === 'SEA') {
+                  nextArrival3TypeCell.style.color = 'green';
+                } else if (service.next3.load === 'SDA') {
+                  nextArrival3TypeCell.style.color = 'orange';
+                } else if (service.next3.load === 'LSD') {
+                  nextArrival3TypeCell.style.color = 'red';
+                }
+              }
+            });
+          } else {
+            busDataContainer1.innerHTML = '<tr><td colspan="8">No information found for Bus No 58.</td></tr>';
+          }
+        } else {
+          busDataContainer1.innerHTML = '<tr><td colspan="8">Failed to load bus data.</td></tr>';
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching data for bus stop 72059:', error);
+        busDataContainer1.innerHTML = '<tr><td colspan="8">Error fetching bus data.</td></tr>';
+      });
+  }
+
+  // Call the function initially
+  fetchBusData1();
+
+  // Set interval to call the function every 10 seconds (10000 milliseconds)
+  setInterval(fetchBusData1, 10000);
+</script>
+
+<h1>Bus No 58 Arrivals - Bus Stop 77211 Home</h1>
+
+<table id="busTable2">
+  <thead>
+    <tr>
+      <th>Bus No</th>
+      <th style="color: red;">1st Bus</th>
+      <th>Type</th>
+      <th style="color: red;">2nd Bus</th>
+      <th>Type</th>
+      <th style="color: red;">3rd Bus</th>
+      <th>Type</th>
+    </tr>
+  </thead>
+  <tbody id="busData2">
+  </tbody>
+</table>
+
+<script>
+  const url2 = 'https://arrivelah2.busrouter.sg/?id=77211';
+  const busDataContainer2 = document.getElementById('busData2');
+
+  function fetchBusData2() {
+    fetch(url2)
+      .then(response => response.json())
+      .then(data => {
+        if (data && data.services) {
+          const bus58Services = data.services.filter(service => service.no === '58');
+
+          // Clear existing table rows
+          busDataContainer2.innerHTML = '';
+
+          if (bus58Services.length > 0) {
+            bus58Services.forEach(service => {
+              const row = busDataContainer2.insertRow();
+              let cellIndex = 0;
+
+              // Bus No
+              const busNoCell = row.insertCell(cellIndex++);
+              busNoCell.textContent = service.no;
+
+              // Operator
+              //const operatorCell = row.insertCell(cellIndex++);
+              //operatorCell.textContent = service.operator;
+
+              // Next Arrival
+              const nextArrivalCell = row.insertCell(cellIndex++);
+              nextArrivalCell.textContent = service.next ? new Date(service.next.time).toLocaleString('en-SG') : '-';
+              nextArrivalCell.style.color = 'red'; // Apply red color
+
+
+              // Next Arrival Type
+              const nextArrivalTypeCell = row.insertCell(cellIndex++);
+              nextArrivalTypeCell.textContent = service.next && service.next.type ? service.next.type.toUpperCase() : '-';
+              if (service.next && service.next.load) {
+                if (service.next.load === 'SEA') {
+                  nextArrivalTypeCell.style.color = 'green';
+                } else if (service.next.load === 'SDA') {
+                  nextArrivalTypeCell.style.color = 'orange';
+                } else if (service.next.load === 'LSD') {
+                  nextArrivalTypeCell.style.color = 'red';
+                }
+              }
+
+              // Subsequent Arrival
+              const subsequentArrivalCell = row.insertCell(cellIndex++);
+              subsequentArrivalCell.textContent = service.subsequent ? new Date(service.subsequent.time).toLocaleString('en-SG') : '-';
+              subsequentArrivalCell.style.color = 'red'; // Apply red color
+
+              // Subsequent Arrival Type
+              const subsequentArrivalTypeCell = row.insertCell(cellIndex++);
+              subsequentArrivalTypeCell.textContent = service.subsequent && service.subsequent.type ? service.subsequent.type.toUpperCase() : '-';
+              if (service.subsequent && service.subsequent.load) {
+                if (service.subsequent.load === 'SEA') {
+                  subsequentArrivalTypeCell.style.color = 'green';
+                } else if (service.subsequent.load === 'SDA') {
+                  subsequentArrivalTypeCell.style.color = 'orange';
+                } else if (service.subsequent.load === 'LSD') {
+                  subsequentArrivalTypeCell.style.color = 'red';
+                }
+              }
+
+              // Next Arrival 3
+              const nextArrival3Cell = row.insertCell(cellIndex++);
+              nextArrival3Cell.textContent = service.next3 ? new Date(service.next3.time).toLocaleString('en-SG') : '-';
+              nextArrival3Cell.style.color = 'red'; // Apply red color
+
+              // Next Arrival 3 Type
+              const nextArrival3TypeCell = row.insertCell(cellIndex++);
+              nextArrival3TypeCell.textContent = service.next3 && service.next3.type ? service.next3.type.toUpperCase() : '-';
+              if (service.next3 && service.next3.load) {
+                if (service.next3.load === 'SEA') {
+                  nextArrival3TypeCell.style.color = 'green';
+                } else if (service.next3.load === 'SDA') {
+                  nextArrival3TypeCell.style.color = 'orange';
+                } else if (service.next3.load === 'LSD') {
+                  nextArrival3TypeCell.style.color = 'red';
+                }
+              }
+            });
+          } else {
+            busDataContainer2.innerHTML = '<tr><td colspan="8">No information found for Bus No 58.</td></tr>';
+          }
+        } else {
+          busDataContainer2.innerHTML = '<tr><td colspan="8">Failed to load bus data.</td></tr>';
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching data for bus stop 77211:', error);
+        busDataContainer2.innerHTML = '<tr><td colspan="8">Error fetching bus data.</td></tr>';
+      });
+  }
+
+  // Call the function initially
+  fetchBusData2();
+
+  // Set interval to call the function every 10 seconds (10000 milliseconds)
+  setInterval(fetchBusData2, 10000);
+</script>
+
 </body>
 </html>
