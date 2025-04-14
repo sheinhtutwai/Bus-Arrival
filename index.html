@@ -5,35 +5,42 @@
     <!-- Make site responsive -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bus No 58 Arrivals</title>
+
     <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="/manifest.json"> <!-- Use absolute path -->
+
     <!-- Theme Color for Browser UI -->
     <meta name="theme-color" content="#007bff">
-    <!-- Basic Icons (replace with your actual icons) -->
-    <link rel="icon" href="icons/icon-192x192.png" sizes="192x192" type="image/png">
-    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+
+    <!-- Basic Icons (ensure paths are correct relative to root) -->
+    <link rel="icon" href="/icons/icon-192x192.png" sizes="192x192" type="image/png"> <!-- Use absolute path -->
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png"> <!-- Use absolute path -->
 
     <style>
         body {
             font-family: sans-serif;
             padding: 10px;
             margin: 0;
+            line-height: 1.4; /* Improve readability */
         }
 
         h1 {
             text-align: center;
             margin-bottom: 20px;
+            font-size: 1.5em; /* Adjust heading size */
         }
 
         .table-container {
             overflow-x: auto; /* Allows horizontal scrolling on small screens */
             margin-bottom: 20px;
+            -webkit-overflow-scrolling: touch; /* Smoother scrolling on iOS */
         }
 
         .bus-table {
             border-collapse: collapse;
             width: 100%;
             min-width: 600px; /* Prevent table from becoming too squished */
+            font-size: 0.9em; /* Slightly smaller table font */
         }
 
         .bus-table th,
@@ -46,6 +53,7 @@
 
         .bus-table th {
             background-color: #f2f2f2;
+            font-weight: bold;
         }
 
         .arrival-time {
@@ -67,16 +75,25 @@
         }
 
         .button-container button {
-            padding: 12px 20px;
+            padding: 12px 15px; /* Adjust padding slightly */
             margin: 0; /* Remove default margin, use gap instead */
             border: none;
             background-color: #d9534f; /* Default red */
             color: white;
             cursor: pointer;
             border-radius: 4px;
-            font-size: 1em;
+            font-size: 0.95em; /* Adjust button font size */
             transition: background-color 0.2s ease;
+            flex-grow: 1; /* Allow buttons to grow */
+            max-width: 250px; /* Max width per button */
         }
+
+        @media (min-width: 600px) {
+            .button-container button {
+                flex-grow: 0; /* Don't grow on larger screens */
+            }
+        }
+
 
         .button-container button.selected {
             background-color: #5cb85c; /* Green */
@@ -100,6 +117,7 @@
             max-width: 300px; /* Max width for larger screens */
             margin-left: auto;
             margin-right: auto;
+            box-sizing: border-box; /* Include padding in width */
         }
          #installButton:hover {
             background-color: #0056b3; /* Darker blue */
@@ -161,19 +179,26 @@
         let deferredPrompt;
 
         window.addEventListener('beforeinstallprompt', (e) => {
-            // Prevent the mini-infobar from appearing on mobile
+            // Prevent the mini-infobar from appearing on mobile (and some desktop)
             e.preventDefault();
             // Stash the event so it can be triggered later.
             deferredPrompt = e;
             // Update UI notify the user they can install the PWA
             console.log('`beforeinstallprompt` event was fired.');
-            // Show the install button
-            installButton.style.display = 'block';
-
-            installButton.addEventListener('click', installApp);
+            // Show the install button only if the app is not already installed
+            if (!window.matchMedia('(display-mode: standalone)').matches) {
+                 installButton.style.display = 'block';
+                 installButton.addEventListener('click', installApp);
+            } else {
+                console.log('App already installed (standalone mode detected).');
+            }
         });
 
         function installApp() {
+            if (!deferredPrompt) {
+                console.log('Install prompt not available.');
+                return; // Guard against race conditions or unexpected states
+            }
             // Hide the app provided install promotion
             installButton.style.display = 'none';
             // Show the install prompt
@@ -187,6 +212,9 @@
                 }
                 // We've used the prompt, and can't use it again, discard it
                 deferredPrompt = null;
+            }).catch(error => {
+                 console.error('Error during userChoice:', error);
+                 deferredPrompt = null; // Ensure it's cleared even on error
             });
         }
 
@@ -206,12 +234,12 @@
             if (!isoTimeString) return '-';
             try {
                 const date = new Date(isoTimeString);
-                 // Use Singapore Time Zone explicitly if running elsewhere, but toLocaleString usually handles it
+                // Use Singapore Time Zone explicitly if needed, but toLocaleTimeString often handles it
                 return date.toLocaleTimeString('en-SG', {
                     hour: 'numeric',
                     minute: '2-digit',
-                    hour12: true
-                    // timeZone: 'Asia/Singapore' // Optional: Be explicit
+                    hour12: true,
+                    timeZone: 'Asia/Singapore' // Be explicit for consistency
                 });
             } catch (e) {
                 console.error("Error formatting date:", isoTimeString, e);
@@ -228,6 +256,7 @@
         function fetchBusData(busStopId) {
             currentBusStopId = busStopId; // Store the current bus stop ID
             console.log(`Fetching data for bus stop ${busStopId}...`);
+            // Use HTTPS for the API call as well, required for PWAs
             const url = `https://arrivelah2.busrouter.sg/?id=${busStopId}`;
 
             // Show loading message immediately
@@ -236,12 +265,14 @@
             fetch(url)
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
+                        // Throw an error with status text to provide more context
+                        throw new Error(`HTTP error! Status: ${response.status} ${response.statusText}`);
                     }
                     return response.json();
                 })
                 .then(data => {
                     if (data && data.services) {
+                        // Find specifically the service for Bus 58
                         const bus58Service = data.services.find(service => service.no === '58');
 
                         // Clear existing table rows
@@ -255,7 +286,7 @@
                             // Bus No
                             row.insertCell(cellIndex++).textContent = service.no;
 
-                            // Helper function to add arrival cells
+                            // Helper function to add arrival cells (Handles missing data)
                             const addArrivalCells = (busInfo) => {
                                 const arrivalCell = row.insertCell(cellIndex++);
                                 arrivalCell.textContent = formatTime(busInfo?.time);
@@ -264,26 +295,31 @@
                                 const typeCell = row.insertCell(cellIndex++);
                                 const load = busInfo?.load?.toUpperCase() || '-';
                                 const type = busInfo?.type?.toUpperCase() || '-';
+                                // Combine Load and Type info for clarity
                                 typeCell.textContent = `${load} / ${type}`;
                                 if (busInfo?.load) {
-                                     typeCell.classList.add(busInfo.load); // Add class for styling (SEA, SDA, LSD)
+                                     typeCell.classList.add(busInfo.load.toUpperCase()); // Add class for styling (SEA, SDA, LSD)
                                 }
                             };
 
+                            // Populate cells for next, next2 (from API), and next3 buses
                             addArrivalCells(service.next);   // 1st Bus
                             addArrivalCells(service.next2);  // 2nd Bus (API uses next2)
                             addArrivalCells(service.next3);  // 3rd Bus
 
                         } else {
-                           showMessage(`No arrival information found for Bus No 58 at stop ${busStopId}.`);
+                           // Service 58 not found at this stop in the API response
+                           showMessage(`Bus No 58 not operating or no data available at stop ${busStopId} currently.`);
                         }
                     } else {
-                        showMessage(`Failed to load valid bus data structure for stop ${busStopId}.`);
+                        // API response structure is unexpected or missing 'services'
+                        showMessage(`Received invalid data structure from API for stop ${busStopId}.`);
                     }
                 })
                 .catch(error => {
-                    console.error(`Error fetching data for bus stop ${busStopId}:`, error);
-                    showMessage(`Error fetching bus data for stop ${busStopId}. Please check connection.`);
+                    console.error(`Error fetching or processing data for bus stop ${busStopId}:`, error);
+                    // Display a user-friendly error message
+                    showMessage(`Error fetching bus data for stop ${busStopId}. Check connection or try again later.`);
                 });
         }
 
@@ -300,7 +336,7 @@
         });
 
         function selectButton(selectedButton) {
-            // Deselect all buttons
+            // Deselect all buttons in the container
             document.querySelectorAll('.button-container button').forEach(btn => {
                 btn.classList.remove('selected');
             });
@@ -310,20 +346,68 @@
 
         // --- Auto Refresh Logic ---
         function startAutoRefresh() {
-            // Clear any existing interval
+            // Clear any existing interval to prevent duplicates
             if (refreshIntervalId) {
                 clearInterval(refreshIntervalId);
                 console.log("Cleared previous refresh interval.");
+                refreshIntervalId = null; // Reset the ID
             }
             // Start a new interval only if a bus stop is selected
             if (currentBusStopId) {
                 console.log(`Starting auto-refresh every ${REFRESH_INTERVAL / 1000}s for stop ${currentBusStopId}`);
                 refreshIntervalId = setInterval(() => {
-                    console.log("Auto-refresh triggered.");
-                    fetchBusData(currentBusStopId); // Fetch data for the currently selected stop
+                    console.log("Auto-refresh triggered for stop:", currentBusStopId);
+                    // Make sure we still have a selected stop before fetching
+                    if (currentBusStopId) {
+                       fetchBusData(currentBusStopId); // Fetch data for the currently selected stop
+                    } else {
+                       console.log("Auto-refresh skipped: No bus stop selected.");
+                       clearInterval(refreshIntervalId); // Stop interval if stop becomes unselected somehow
+                       refreshIntervalId = null;
+                    }
                 }, REFRESH_INTERVAL);
+            } else {
+                 console.log("Auto-refresh not started: No bus stop selected.");
             }
         }
+
+        // --- Service Worker Registration ---
+        function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    // Register the service worker, ensuring the path is correct relative to the origin
+                    navigator.serviceWorker.register('/sw.js')
+                        .then(registration => {
+                            console.log('Service Worker registered successfully with scope:', registration.scope);
+
+                            // Optional: Listen for updates
+                            registration.onupdatefound = () => {
+                                const installingWorker = registration.installing;
+                                if (installingWorker) {
+                                    installingWorker.onstatechange = () => {
+                                        if (installingWorker.state === 'installed') {
+                                            if (navigator.serviceWorker.controller) {
+                                                // New update available
+                                                console.log('New content is available; please refresh.');
+                                                // You could show a "refresh" button to the user here
+                                            } else {
+                                                // Content is cached for the first time
+                                                console.log('Content is cached for offline use.');
+                                            }
+                                        }
+                                    };
+                                }
+                            };
+                        })
+                        .catch(err => {
+                            console.error('Service Worker registration failed:', err);
+                        });
+                });
+            } else {
+                 console.log('Service Worker is not supported by this browser.');
+            }
+        }
+
 
         // --- Initial Load ---
         function initialize() {
@@ -332,23 +416,17 @@
             selectButton(busStop72059Button);
             startAutoRefresh(); // Start refreshing after initial load
 
-            // --- Service Worker Registration ---
-            if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('/sw.js')
-                        .then(registration => {
-                            console.log('Service Worker registered with scope:', registration.scope);
-                        })
-                        .catch(err => {
-                            console.error('Service Worker registration failed:', err);
-                        });
-                });
-            } else {
-                 console.log('Service Worker not supported in this browser.');
+            // Register the Service Worker
+            registerServiceWorker();
+
+            // Check if running as installed PWA and hide install button if so
+             if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+                console.log('Running as installed PWA, hiding install button.');
+                installButton.style.display = 'none';
             }
         }
 
-        // Run initialize when the DOM is ready
+        // Run initialize when the DOM is fully loaded and parsed
        document.addEventListener('DOMContentLoaded', initialize);
 
     </script>
